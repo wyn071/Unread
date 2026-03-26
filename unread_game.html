@@ -1,0 +1,1812 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unread</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #111318;
+        --surface: #181c23;
+        --surface2: #1e2330;
+        --border: #252b38;
+        --border2: #2e3545;
+        --text-primary: #e8eaf0;
+        --text-secondary: #8891a4;
+        --text-muted: #4a5368;
+        --text-faded: #363d50;
+        --accent: #5b8cff;
+        --accent-soft: rgba(91, 140, 255, 0.12);
+        --unread: #ff5f7e;
+        --unread-soft: rgba(255, 95, 126, 0.12);
+        --productive: #3ecf8e;
+        --productive-soft: rgba(62, 207, 142, 0.1);
+        --bubble-out: #252b3b;
+        --bubble-in: #1e2330;
+        --font: "DM Sans", sans-serif;
+        --font-display: "DM Serif Display", serif;
+        --radius: 18px;
+        --radius-sm: 10px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      html,
+      body {
+        height: 100%;
+        background: var(--bg);
+        color: var(--text-primary);
+        font-family: var(--font);
+        font-size: 15px;
+        overflow: hidden;
+      }
+
+      /* ─── SCREENS ─── */
+      .screen {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        transition:
+          opacity 0.4s,
+          transform 0.4s;
+      }
+      .screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(12px);
+      }
+
+      /* ─── SPLASH ─── */
+      #splash {
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        background: var(--bg);
+      }
+
+      .splash-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        animation: fadeUp 0.8s ease both;
+      }
+
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .splash-title {
+        font-family: var(--font-display);
+        font-size: 64px;
+        color: var(--text-primary);
+        letter-spacing: -1px;
+        line-height: 1;
+      }
+
+      .splash-tagline {
+        font-size: 14px;
+        color: var(--text-secondary);
+        letter-spacing: 0.08em;
+        font-weight: 300;
+      }
+
+      .splash-divider {
+        width: 1px;
+        height: 40px;
+        background: linear-gradient(
+          to bottom,
+          transparent,
+          var(--border2),
+          transparent
+        );
+        margin: 4px 0;
+      }
+
+      .btn-primary {
+        background: var(--text-primary);
+        color: var(--bg);
+        border: none;
+        padding: 13px 40px;
+        border-radius: 100px;
+        font-family: var(--font);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        letter-spacing: 0.02em;
+        transition:
+          opacity 0.2s,
+          transform 0.2s;
+      }
+      .btn-primary:hover {
+        opacity: 0.88;
+        transform: translateY(-1px);
+      }
+      .btn-primary:active {
+        transform: translateY(0);
+      }
+
+      /* ─── NAME ENTRY ─── */
+      #namescreen {
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
+      }
+
+      .name-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+        width: 100%;
+        max-width: 340px;
+        padding: 0 24px;
+        animation: fadeUp 0.5s ease both;
+      }
+
+      .name-label {
+        font-family: var(--font-display);
+        font-size: 28px;
+        color: var(--text-primary);
+        text-align: center;
+      }
+
+      .name-sublabel {
+        font-size: 13px;
+        color: var(--text-secondary);
+        text-align: center;
+        margin-top: -16px;
+        line-height: 1.6;
+      }
+
+      .name-input {
+        width: 100%;
+        background: var(--surface);
+        border: 1px solid var(--border2);
+        border-radius: var(--radius-sm);
+        padding: 14px 18px;
+        font-family: var(--font);
+        font-size: 16px;
+        color: var(--text-primary);
+        outline: none;
+        transition: border-color 0.2s;
+        text-align: center;
+      }
+      .name-input::placeholder {
+        color: var(--text-muted);
+      }
+      .name-input:focus {
+        border-color: var(--accent);
+      }
+
+      /* ─── APP SHELL ─── */
+      #app {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        max-width: 420px;
+        margin: 0 auto;
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+
+      /* ─── TOP NAV ─── */
+      .top-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px 12px;
+        flex-shrink: 0;
+      }
+
+      .nav-title {
+        font-family: var(--font-display);
+        font-size: 26px;
+        color: var(--text-primary);
+      }
+
+      .nav-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 15px;
+        transition:
+          background 0.15s,
+          color 0.15s;
+        position: relative;
+      }
+      .icon-btn:hover {
+        background: var(--surface2);
+        color: var(--text-primary);
+      }
+
+      /* ─── CHAT LIST ─── */
+      #chatlist {
+        flex: 1;
+        overflow-y: auto;
+        padding: 4px 0 80px;
+      }
+
+      .chat-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 20px;
+        cursor: pointer;
+        transition: background 0.15s;
+        position: relative;
+      }
+      .chat-item:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .chat-item:active {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 17px;
+        flex-shrink: 0;
+        position: relative;
+        cursor: pointer;
+      }
+
+      .avatar-casey {
+        background: #1e2a3a;
+        color: #7aaeff;
+      }
+      .avatar-river {
+        background: #1e2e26;
+        color: #5ecfa0;
+      }
+      .avatar-jordan {
+        background: #2a1e2e;
+        color: #c07aff;
+      }
+      .avatar-alex {
+        background: #2e2a1e;
+        color: #ffbc5e;
+      }
+      .avatar-blackwell {
+        background: #2e1e1e;
+        color: #ff7a7a;
+      }
+      .avatar-dmitri {
+        background: #1e2a2e;
+        color: #5eb8ff;
+      }
+      .avatar-sam {
+        background: #2a2e1e;
+        color: #b8d45e;
+      }
+
+      .chat-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .chat-name {
+        font-weight: 500;
+        font-size: 15px;
+        color: var(--text-primary);
+        margin-bottom: 3px;
+      }
+
+      .chat-role {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+      }
+
+      .chat-preview {
+        font-size: 13px;
+        color: var(--text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .chat-preview.unread-preview {
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+
+      .chat-meta {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+
+      .chat-time {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+
+      .unread-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--unread);
+        box-shadow: 0 0 8px rgba(255, 95, 126, 0.5);
+      }
+
+      /* ─── BOTTOM TAB BAR ─── */
+      .tab-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 64px;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        padding-bottom: 4px;
+        flex-shrink: 0;
+      }
+
+      .tab-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 20px;
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 10px;
+        letter-spacing: 0.05em;
+        transition: color 0.15s;
+        background: none;
+        border: none;
+        font-family: var(--font);
+      }
+      .tab-btn.active {
+        color: var(--accent);
+      }
+      .tab-btn svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      /* ─── CHAT WINDOW ─── */
+      #chatwindow {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        height: 100%;
+      }
+
+      .chat-topbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+
+      .back-btn {
+        background: none;
+        border: none;
+        color: var(--accent);
+        font-size: 22px;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        line-height: 1;
+      }
+
+      .topbar-info {
+        flex: 1;
+      }
+      .topbar-name {
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        transition: color 0.15s;
+      }
+      .topbar-name:hover {
+        color: var(--accent);
+      }
+      .topbar-role {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 1px;
+      }
+
+      .info-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 14px;
+        font-style: italic;
+        font-family: Georgia, serif;
+        font-weight: 600;
+        transition: background 0.15s;
+      }
+      .info-btn:hover {
+        background: var(--surface2);
+      }
+
+      /* ─── MESSAGES ─── */
+      #messages-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        scroll-behavior: smooth;
+      }
+
+      #messages-container::-webkit-scrollbar {
+        width: 3px;
+      }
+      #messages-container::-webkit-scrollbar-thumb {
+        background: var(--border2);
+        border-radius: 2px;
+      }
+
+      .timestamp-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 16px 0 12px;
+      }
+      .timestamp-divider::before,
+      .timestamp-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+      .timestamp-divider span {
+        font-size: 11px;
+        color: var(--text-muted);
+        white-space: nowrap;
+        letter-spacing: 0.05em;
+      }
+
+      .msg-row {
+        display: flex;
+        margin-bottom: 2px;
+        animation: msgIn 0.3s ease both;
+      }
+      @keyframes msgIn {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .msg-row.outgoing {
+        justify-content: flex-end;
+      }
+      .msg-row.incoming {
+        justify-content: flex-start;
+      }
+
+      .bubble {
+        max-width: 78%;
+        padding: 10px 14px;
+        border-radius: 18px;
+        font-size: 14px;
+        line-height: 1.55;
+        word-wrap: break-word;
+      }
+
+      .incoming .bubble {
+        background: var(--bubble-in);
+        color: var(--text-primary);
+        border-bottom-left-radius: 5px;
+        border: 1px solid var(--border);
+      }
+
+      .outgoing .bubble {
+        background: var(--bubble-out);
+        color: var(--text-primary);
+        border-bottom-right-radius: 5px;
+      }
+
+      .msg-row.faded .bubble {
+        opacity: 0.45;
+        background: transparent;
+        border-color: var(--border);
+      }
+      .msg-row.faded.outgoing .bubble {
+        background: transparent;
+      }
+
+      .new-msg-marker {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 20px 0 14px;
+      }
+      .new-msg-marker::before,
+      .new-msg-marker::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 95, 126, 0.3);
+      }
+      .new-msg-marker span {
+        font-size: 11px;
+        color: var(--unread);
+        letter-spacing: 0.06em;
+        white-space: nowrap;
+      }
+
+      /* Reaction */
+      .msg-reaction {
+        font-size: 16px;
+        margin-top: 2px;
+        padding-left: 4px;
+        opacity: 0.7;
+      }
+
+      /* ─── CHOICES ─── */
+      #choices-area {
+        padding: 12px 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex-shrink: 0;
+        border-top: 1px solid var(--border);
+        background: var(--bg);
+      }
+
+      .choices-hint {
+        font-size: 11px;
+        color: var(--text-muted);
+        letter-spacing: 0.06em;
+        margin-bottom: 2px;
+      }
+
+      .choice-btn {
+        background: var(--surface);
+        border: 1px solid var(--border2);
+        border-radius: var(--radius-sm);
+        padding: 12px 16px;
+        font-family: var(--font);
+        font-size: 13px;
+        color: var(--text-primary);
+        cursor: pointer;
+        text-align: left;
+        transition: all 0.15s;
+        line-height: 1.5;
+      }
+      .choice-btn:hover {
+        background: var(--surface2);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .choice-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* ─── CASE NOTES ─── */
+      #casenotes {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .notes-header {
+        font-family: var(--font-display);
+        font-size: 22px;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+      }
+
+      .notes-sub {
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 8px;
+      }
+
+      .clue-card {
+        background: var(--surface);
+        border: 1px solid var(--border2);
+        border-left: 3px solid var(--productive);
+        border-radius: var(--radius-sm);
+        padding: 14px 16px;
+        animation: fadeUp 0.4s ease both;
+      }
+
+      .clue-label {
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        color: var(--productive);
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .clue-text {
+        font-size: 13px;
+        color: var(--text-primary);
+        line-height: 1.6;
+      }
+
+      .empty-notes {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        gap: 12px;
+        color: var(--text-muted);
+        text-align: center;
+        padding: 40px;
+      }
+
+      .empty-notes .empty-icon {
+        font-size: 32px;
+        opacity: 0.4;
+      }
+      .empty-notes p {
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      /* ─── ALL CHARACTERS PANEL ─── */
+      #allchars-panel {
+        position: absolute;
+        inset: 0;
+        background: var(--bg);
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      #allchars-panel.open {
+        transform: translateX(0);
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+
+      .panel-title {
+        font-family: var(--font-display);
+        font-size: 20px;
+        flex: 1;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 22px;
+        cursor: pointer;
+        padding: 4px;
+        line-height: 1;
+      }
+
+      .chars-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px 0;
+      }
+
+      .char-card {
+        display: flex;
+        gap: 14px;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .char-card:last-child {
+        border-bottom: none;
+      }
+
+      .char-avatar {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      .char-info {
+        flex: 1;
+      }
+      .char-name {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 2px;
+      }
+      .char-role {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+      }
+      .char-desc {
+        font-size: 12px;
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+
+      .char-tag {
+        display: inline-block;
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        margin-top: 6px;
+        letter-spacing: 0.05em;
+      }
+      .tag-player {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .tag-suspect {
+        background: var(--unread-soft);
+        color: var(--unread);
+      }
+      .tag-victim {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text-muted);
+      }
+
+      /* ─── PROFILE CARD SLIDE-OUT ─── */
+      #profile-card {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--surface);
+        border-top: 1px solid var(--border2);
+        border-radius: 24px 24px 0 0;
+        z-index: 200;
+        transform: translateY(100%);
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        padding-bottom: 32px;
+      }
+      #profile-card.open {
+        transform: translateY(0);
+      }
+
+      .card-handle {
+        width: 36px;
+        height: 4px;
+        background: var(--border2);
+        border-radius: 2px;
+        margin: 12px auto 20px;
+      }
+
+      .card-inner {
+        padding: 0 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .card-avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .card-name {
+        font-family: var(--font-display);
+        font-size: 22px;
+        text-align: center;
+      }
+
+      .card-role {
+        font-size: 13px;
+        color: var(--text-muted);
+        text-align: center;
+      }
+
+      .card-divider {
+        width: 100%;
+        height: 1px;
+        background: var(--border);
+        margin: 6px 0;
+      }
+
+      .card-row {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .card-row-label {
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        color: var(--text-muted);
+        text-transform: uppercase;
+      }
+
+      .card-row-value {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+
+      /* Overlay backdrop */
+      #overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 150;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+      #overlay.show {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      /* ─── SCROLLBAR GLOBAL ─── */
+      ::-webkit-scrollbar {
+        width: 3px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border2);
+        border-radius: 2px;
+      }
+
+      /* ─── NOTIFICATION TOAST ─── */
+      #toast {
+        position: absolute;
+        top: 70px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        background: var(--surface2);
+        border: 1px solid var(--border2);
+        border-radius: 100px;
+        padding: 8px 18px;
+        font-size: 12px;
+        color: var(--productive);
+        white-space: nowrap;
+        opacity: 0;
+        transition:
+          opacity 0.3s,
+          transform 0.3s;
+        z-index: 300;
+        pointer-events: none;
+      }
+      #toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ══════════════════════ SPLASH ══════════════════════ -->
+    <div class="screen" id="splash">
+      <div class="splash-inner">
+        <div class="splash-title">Unread</div>
+        <div class="splash-tagline">Read carefully.</div>
+        <div class="splash-divider"></div>
+        <button class="btn-primary" onclick="goToName()">Begin</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ NAME ENTRY ══════════════════════ -->
+    <div class="screen hidden" id="namescreen">
+      <div class="name-inner">
+        <div class="name-label">What's your name?</div>
+        <div class="name-sublabel">
+          This is how other characters will know you.
+        </div>
+        <input
+          class="name-input"
+          id="nameInput"
+          type="text"
+          placeholder="Enter your name"
+          maxlength="24"
+          autocomplete="off"
+        />
+        <button class="btn-primary" onclick="startGame()">Continue</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ APP ══════════════════════ -->
+    <div class="screen hidden" id="app">
+      <!-- Toast -->
+      <div id="toast">📎 Clue added to Case Notes</div>
+
+      <!-- Overlay -->
+      <div id="overlay" onclick="closeProfileCard()"></div>
+
+      <!-- All Characters Panel -->
+      <div id="allchars-panel">
+        <div class="panel-header">
+          <div class="panel-title">All Characters</div>
+          <button class="close-btn" onclick="closeAllChars()">✕</button>
+        </div>
+        <div class="chars-list" id="chars-list-inner"></div>
+      </div>
+
+      <!-- Profile Card -->
+      <div id="profile-card">
+        <div class="card-handle"></div>
+        <div class="card-inner" id="profile-card-inner"></div>
+      </div>
+
+      <!-- ── CHATLIST VIEW ── -->
+      <div
+        id="view-chatlist"
+        style="display: flex; flex-direction: column; height: 100%"
+      >
+        <div class="top-nav">
+          <div class="nav-title">Unread</div>
+          <div class="nav-actions">
+            <div
+              class="icon-btn"
+              title="All Characters"
+              onclick="openAllChars()"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="9" cy="7" r="4" />
+                <path d="M2 21v-2a4 4 0 014-4h6a4 4 0 014 4v2" />
+                <path d="M19 8v6M22 11h-6" stroke-linecap="round" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div id="chatlist">
+          <!-- Casey -->
+          <div
+            class="chat-item"
+            id="chatitem-casey"
+            onclick="openChat('casey')"
+          >
+            <div
+              class="avatar avatar-casey"
+              onclick="openProfile(event, 'casey')"
+            >
+              CM
+            </div>
+            <div class="chat-info">
+              <div class="chat-name">Casey Morgan</div>
+              <div class="chat-role">Neuro Lead Architect</div>
+              <div class="chat-preview" id="preview-casey">
+                …did you read the documentation?
+              </div>
+            </div>
+            <div class="chat-meta">
+              <div class="chat-time" id="time-casey">Nov 17</div>
+              <div
+                class="unread-dot"
+                id="dot-casey"
+                style="display: none"
+              ></div>
+            </div>
+          </div>
+          <!-- River -->
+          <div
+            class="chat-item"
+            id="chatitem-river"
+            onclick="openChat('river')"
+          >
+            <div
+              class="avatar avatar-river"
+              onclick="openProfile(event, 'river')"
+            >
+              RS
+            </div>
+            <div class="chat-info">
+              <div class="chat-name">River Santos</div>
+              <div class="chat-role">Junior Developer</div>
+              <div class="chat-preview" id="preview-river">
+                Thanks! We should hang soon!
+              </div>
+            </div>
+            <div class="chat-meta">
+              <div class="chat-time" id="time-river">Jan 5</div>
+              <div
+                class="unread-dot"
+                id="dot-river"
+                style="display: none"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchTab('chats', this)">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"
+              />
+            </svg>
+            Chats
+          </button>
+          <button class="tab-btn" onclick="switchTab('notes', this)">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="9" y1="13" x2="15" y2="13" />
+              <line x1="9" y1="17" x2="13" y2="17" />
+            </svg>
+            Case Notes
+          </button>
+        </div>
+      </div>
+
+      <!-- ── CASE NOTES VIEW ── -->
+      <div
+        id="view-casenotes"
+        style="display: none; flex-direction: column; height: 100%"
+      >
+        <div class="top-nav" style="border-bottom: 1px solid var(--border)">
+          <div class="nav-title">Case Notes</div>
+        </div>
+        <div id="casenotes">
+          <div class="empty-notes" id="notes-empty">
+            <div class="empty-icon">🗂</div>
+            <p>No clues yet.<br />Pay attention to your conversations.</p>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <button class="tab-btn" onclick="switchTab('chats', this)">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"
+              />
+            </svg>
+            Chats
+          </button>
+          <button class="tab-btn active" onclick="switchTab('notes', this)">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="9" y1="13" x2="15" y2="13" />
+              <line x1="9" y1="17" x2="13" y2="17" />
+            </svg>
+            Case Notes
+          </button>
+        </div>
+      </div>
+
+      <!-- ── CHAT WINDOW VIEW ── -->
+      <div
+        id="view-chat"
+        style="display: none; flex-direction: column; height: 100%"
+      >
+        <div class="chat-topbar">
+          <button class="back-btn" onclick="closeChat()">‹</button>
+          <div
+            class="avatar"
+            id="chat-avatar"
+            style="width: 38px; height: 38px; font-size: 13px"
+            onclick="openProfileFromChat()"
+          ></div>
+          <div class="topbar-info">
+            <div
+              class="topbar-name"
+              id="chat-name"
+              onclick="openProfileFromChat()"
+            ></div>
+            <div class="topbar-role" id="chat-role"></div>
+          </div>
+          <div class="info-btn" onclick="openProfileFromChat()">i</div>
+        </div>
+
+        <div id="messages-container"></div>
+
+        <div id="choices-area" style="display: none">
+          <div class="choices-hint">CHOOSE YOUR RESPONSE</div>
+          <div id="choice-buttons"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ══════════════════════════════════════════
+      // DATA
+      // ══════════════════════════════════════════
+
+      let playerName = "You";
+      let clues = [];
+      let gameState = {
+        caseyFarewellSeen: false,
+        caseyFarewellReplied: false,
+        riverNewMessageActive: false,
+        currentChat: null,
+      };
+
+      const today = new Date();
+      const todayStr = today.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+      const todayFull = today.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+
+      const characters = {
+        casey: {
+          name: "Casey Morgan",
+          role: "Lead Architect, Neuro",
+          initials: "CM",
+          avatarClass: "avatar-casey",
+          relationship: "Victim. Sent you a message before dying.",
+          personality:
+            "Brilliant, arrogant, paranoid. A programming prodigy who discovered something dangerous in Neurosift's training data.",
+          background:
+            "Former MIT researcher. Architect of Neurosift. Had been encrypting everything and setting up dead man's switches in the weeks before death.",
+          tag: "victim",
+        },
+        river: {
+          name: "River Santos",
+          role: "Junior Developer / Senior Engineer, Neuro",
+          initials: "RS",
+          avatarClass: "avatar-river",
+          relationship: "Your friend. Casey's protégé at Neuro.",
+          personality:
+            "Gifted, warm, recently distant. Was close to Casey but something changed.",
+          background:
+            "Recently promoted to Senior Engineer. Some say they discovered something in Casey's code.",
+          tag: "suspect",
+        },
+        jordan: {
+          name: "Jordan Reeves",
+          role: "CEO, Neuro",
+          initials: "JR",
+          avatarClass: "avatar-jordan",
+          relationship: "Casey's boss. Rumored to be selling the company.",
+          personality:
+            "Charismatic, smooth-talking, barely technical. Business-first.",
+          background:
+            "Former venture capitalist. Convinced investors to pour millions into Casey's vision. Secretly negotiating a company sale.",
+          tag: "suspect",
+        },
+        alex: {
+          name: "Alex Chen",
+          role: "Head of Cybersecurity, Neuro",
+          initials: "AC",
+          avatarClass: "avatar-alex",
+          relationship:
+            "Casey's former MIT research partner. Recently went silent.",
+          personality:
+            "Brilliant, guarded, knows where all the digital bodies are buried.",
+          background:
+            "Co-authored papers with Casey. Had a bitter falling out over IP rights. Their encrypted chat history went silent weeks ago.",
+          tag: "suspect",
+        },
+        blackwell: {
+          name: "Morgan Blackwell",
+          role: "Venture Capitalist / Board Member",
+          initials: "MB",
+          avatarClass: "avatar-blackwell",
+          relationship: "Investor. Was pressuring Casey to launch early.",
+          personality: "Ice-cold, results-driven, ruthless.",
+          background:
+            "Invested $15M in Neuro. Pressured Casey to launch despite 'ethical concerns' and 'unresolved anomalies in the training data.'",
+          tag: "suspect",
+        },
+        dmitri: {
+          name: "Dmitri Volkov",
+          role: "Cybersecurity Consultant",
+          initials: "DV",
+          avatarClass: "avatar-dmitri",
+          relationship: "Mysterious. Casey believed he was a corporate spy.",
+          personality:
+            "Calculated, always one step ahead. Former big-tech employee.",
+          background:
+            "Hired 6 months ago to 'stress-test' Neuro's systems. Previously worked for a major tech competitor.",
+          tag: "suspect",
+        },
+        sam: {
+          name: "Sam Pierce",
+          role: "Operations Manager, Neuro",
+          initials: "SP",
+          avatarClass: "avatar-sam",
+          relationship:
+            "Knows every dirty financial secret. Has been deleting files.",
+          personality: "Exhausted, nervous, pragmatic.",
+          background:
+            "Handled contracts and NDAs. Casey asked Sam to pull unusual transaction records — Sam has been deleting files ever since.",
+          tag: "suspect",
+        },
+      };
+
+      // ══════════════════════════════════════════
+      // NAVIGATION
+      // ══════════════════════════════════════════
+
+      function goToName() {
+        document.getElementById("splash").classList.add("hidden");
+        document.getElementById("namescreen").classList.remove("hidden");
+        setTimeout(() => document.getElementById("nameInput").focus(), 400);
+      }
+
+      function startGame() {
+        const val = document.getElementById("nameInput").value.trim();
+        if (!val) {
+          document.getElementById("nameInput").focus();
+          return;
+        }
+        playerName = val;
+        document.getElementById("namescreen").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
+        initApp();
+      }
+
+      document.getElementById("nameInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") startGame();
+      });
+
+      function initApp() {
+        renderAllCharsList();
+        // Show Casey unread dot after a moment
+        setTimeout(() => {
+          document.getElementById("dot-casey").style.display = "block";
+          document.getElementById("preview-casey").textContent =
+            "If you're reading this…";
+          document
+            .getElementById("preview-casey")
+            .classList.add("unread-preview");
+          document.getElementById("time-casey").textContent = todayStr;
+          gameState.caseyFarewellSeen = false;
+        }, 1200);
+      }
+
+      function switchTab(tab, btn) {
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        // Update all tab bars
+        document.querySelectorAll(".tab-btn").forEach((b) => {
+          const label = b.querySelector("svg") ? b.textContent.trim() : "";
+        });
+        if (tab === "chats") {
+          document.getElementById("view-chatlist").style.display = "flex";
+          document.getElementById("view-casenotes").style.display = "none";
+        } else {
+          document.getElementById("view-chatlist").style.display = "none";
+          document.getElementById("view-casenotes").style.display = "flex";
+        }
+      }
+
+      // ══════════════════════════════════════════
+      // CHAT WINDOW
+      // ══════════════════════════════════════════
+
+      function openChat(contact) {
+        gameState.currentChat = contact;
+        const c = characters[contact];
+
+        document.getElementById("view-chatlist").style.display = "none";
+        document.getElementById("view-casenotes").style.display = "none";
+        document.getElementById("view-chat").style.display = "flex";
+
+        const av = document.getElementById("chat-avatar");
+        av.className = `avatar ${c.avatarClass}`;
+        av.style.cssText = "width:38px;height:38px;font-size:13px;";
+        av.textContent = c.initials;
+        document.getElementById("chat-name").textContent = c.name;
+        document.getElementById("chat-role").textContent = c.role;
+
+        renderChat(contact);
+      }
+
+      function closeChat() {
+        document.getElementById("view-chat").style.display = "none";
+        document.getElementById("view-chatlist").style.display = "flex";
+        gameState.currentChat = null;
+      }
+
+      function renderChat(contact) {
+        const container = document.getElementById("messages-container");
+        container.innerHTML = "";
+        document.getElementById("choices-area").style.display = "none";
+        document.getElementById("choice-buttons").innerHTML = "";
+
+        if (contact === "casey") renderCaseyChat(container);
+        else if (contact === "river") renderRiverChat(container);
+
+        setTimeout(() => {
+          container.scrollTop = container.scrollHeight;
+        }, 50);
+      }
+
+      function makeBubble(text, type, faded) {
+        const row = document.createElement("div");
+        row.className = `msg-row ${type}${faded ? " faded" : ""}`;
+        const b = document.createElement("div");
+        b.className = "bubble";
+        b.innerHTML = text.replace(/\n/g, "<br>");
+        row.appendChild(b);
+        return row;
+      }
+
+      function makeTimestamp(label) {
+        const d = document.createElement("div");
+        d.className = "timestamp-divider";
+        d.innerHTML = `<span>${label}</span>`;
+        return d;
+      }
+
+      function makeNewMarker() {
+        const d = document.createElement("div");
+        d.className = "new-msg-marker";
+        d.innerHTML = `<span>NEW MESSAGE</span>`;
+        return d;
+      }
+
+      // ── CASEY CHAT ──
+      function renderCaseyChat(container) {
+        // Old messages
+        container.appendChild(makeTimestamp("November 17, 2025"));
+        container.appendChild(
+          makeBubble(
+            `Hi, i'm the one on Stack Overflow who asked about the neural net question last week…\njust wanted some elaboration if you have time`,
+            "outgoing",
+            true,
+          ),
+        );
+        container.appendChild(
+          makeBubble(
+            `Did you read the documentation? It's literally explained there.\nBottomline: you normalize the inputs before the activation function. Don't overcomplicate.`,
+            "incoming",
+            true,
+          ),
+        );
+        container.appendChild(
+          makeBubble(`Ah okay thanks, really appreciate it`, "outgoing", true),
+        );
+
+        // New farewell message
+        if (gameState.caseyFarewellSeen || true) {
+          container.appendChild(makeNewMarker());
+          container.appendChild(makeTimestamp(todayFull));
+          container.appendChild(
+            makeBubble(
+              `If you're reading this…\nI'm gone.\nDon't try to fix anything yourself. Just trust no one, and check the legacy branch if you can.`,
+              "incoming",
+              false,
+            ),
+          );
+
+          // Mark dot as read
+          document.getElementById("dot-casey").style.display = "none";
+
+          // Show choices
+          showCaseyChoices();
+        }
+      }
+
+      function showCaseyChoices() {
+        if (gameState.caseyFarewellReplied) return;
+        const area = document.getElementById("choices-area");
+        const btns = document.getElementById("choice-buttons");
+        area.style.display = "flex";
+        btns.innerHTML = "";
+
+        const choices = [
+          { text: "Casey? What happened?", action: () => handleCaseyChoice(1) },
+          {
+            text: "Do not respond. Let the message sit.",
+            action: () => handleCaseyChoice(2),
+            italic: true,
+          },
+        ];
+
+        choices.forEach((c) => {
+          const btn = document.createElement("button");
+          btn.className = "choice-btn";
+          if (c.italic) btn.style.fontStyle = "italic";
+          btn.textContent = c.text;
+          btn.onclick = c.action;
+          btns.appendChild(btn);
+        });
+      }
+
+      function handleCaseyChoice(n) {
+        gameState.caseyFarewellReplied = true;
+        const area = document.getElementById("choices-area");
+        const container = document.getElementById("messages-container");
+        area.style.display = "none";
+
+        if (n === 1) {
+          container.appendChild(
+            makeBubble("Casey? What happened?", "outgoing", false),
+          );
+        }
+        // Both lead to River notification after delay
+        container.scrollTop = container.scrollHeight;
+
+        setTimeout(() => {
+          triggerRiverMessage();
+        }, 2000);
+      }
+
+      // ── RIVER CHAT ──
+      function renderRiverChat(container) {
+        // Old messages
+        container.appendChild(makeTimestamp("January 5, 2026"));
+        container.appendChild(
+          makeBubble("I Got Into Neuro!", "incoming", true),
+        );
+        container.appendChild(
+          makeBubble("Congrats! That's Awesome.", "outgoing", true),
+        );
+        container.appendChild(
+          makeBubble(
+            "Thanks! I heard our lead architect went to MIT, name's Casey. That sound familiar?",
+            "incoming",
+            true,
+          ),
+        );
+        container.appendChild(makeBubble("Morgan?", "outgoing", true));
+        container.appendChild(
+          makeBubble(
+            "Yep Casey Morgan. Have you guys worked together at MIT?",
+            "incoming",
+            true,
+          ),
+        );
+        container.appendChild(
+          makeBubble(
+            "Oh yeah, seen him around campus. He was in the same department. We exchanged a few messages once about some code.",
+            "outgoing",
+            true,
+          ),
+        );
+        container.appendChild(
+          makeBubble(
+            `Coool. He's my mentor, man's a genius.`,
+            "incoming",
+            true,
+          ),
+        );
+        container.appendChild(
+          makeBubble(
+            `Glad you got to work with him, congrats once again!`,
+            "outgoing",
+            true,
+          ),
+        );
+        container.appendChild(
+          makeBubble(
+            `Thanks ${playerName}, wish you were here. We should hang soon!`,
+            "incoming",
+            true,
+          ),
+        );
+        container.appendChild(
+          makeBubble(`Bet! Lets catch up soonn`, "outgoing", true),
+        );
+
+        // River reaction
+        const reactionRow = document.createElement("div");
+        reactionRow.className = "msg-row incoming faded";
+        reactionRow.innerHTML = `<div class="msg-reaction">🤝</div>`;
+        container.appendChild(reactionRow);
+
+        // New message if triggered
+        if (gameState.riverNewMessageActive) {
+          container.appendChild(makeNewMarker());
+          container.appendChild(makeTimestamp(todayFull));
+          container.appendChild(
+            makeBubble(`${playerName}, Casey is gone.`, "incoming", false),
+          );
+
+          // Mark read
+          document.getElementById("dot-river").style.display = "none";
+
+          showRiverChoices();
+        }
+      }
+
+      function triggerRiverMessage() {
+        gameState.riverNewMessageActive = true;
+        document.getElementById("dot-river").style.display = "block";
+        document.getElementById("preview-river").textContent =
+          `${playerName}, Casey is gone.`;
+        document
+          .getElementById("preview-river")
+          .classList.add("unread-preview");
+        document.getElementById("time-river").textContent = todayStr;
+
+        // If currently in River's chat, re-render
+        if (gameState.currentChat === "river") {
+          renderChat("river");
+        }
+
+        // If in casey chat, show a subtle hint
+        if (gameState.currentChat === "casey") {
+          const container = document.getElementById("messages-container");
+          const hint = document.createElement("div");
+          hint.className = "new-msg-marker";
+          hint.innerHTML = `<span style="color:var(--accent)">New message from River Santos</span>`;
+          container.appendChild(hint);
+          container.scrollTop = container.scrollHeight;
+        }
+      }
+
+      function showRiverChoices() {
+        if (gameState.riverChoiceMade) return;
+        const area = document.getElementById("choices-area");
+        const btns = document.getElementById("choice-buttons");
+        area.style.display = "flex";
+        btns.innerHTML = "";
+
+        const choices = [
+          {
+            text: "What? What do you mean gone?",
+            type: "neutral",
+            action: () => handleRiverChoice(1),
+          },
+          {
+            text: "I just got a message from Casey. What is happening?",
+            type: "productive",
+            action: () => handleRiverChoice(2),
+          },
+        ];
+
+        choices.forEach((c) => {
+          const btn = document.createElement("button");
+          btn.className = "choice-btn";
+          btn.textContent = c.text;
+          btn.onclick = c.action;
+          btns.appendChild(btn);
+        });
+      }
+
+      function handleRiverChoice(n) {
+        gameState.riverChoiceMade = true;
+        const area = document.getElementById("choices-area");
+        const container = document.getElementById("messages-container");
+        area.style.display = "none";
+
+        if (n === 1) {
+          container.appendChild(
+            makeBubble("What? What do you mean gone?", "outgoing", false),
+          );
+        } else {
+          container.appendChild(
+            makeBubble(
+              "I just got a message from Casey. What is happening?",
+              "outgoing",
+              false,
+            ),
+          );
+          // Productive: add clue
+          addClue(
+            "Clue #1",
+            `Casey sent you a scheduled farewell message. River confirmed Casey is dead. The message was pre-programmed — someone planned this.`,
+          );
+        }
+
+        container.scrollTop = container.scrollHeight;
+        // Scene B continues here — placeholder for next scene
+      }
+
+      // ══════════════════════════════════════════
+      // CASE NOTES
+      // ══════════════════════════════════════════
+
+      function addClue(label, text) {
+        clues.push({ label, text });
+        document.getElementById("notes-empty").style.display = "none";
+
+        const card = document.createElement("div");
+        card.className = "clue-card";
+        card.innerHTML = `<div class="clue-label">${label}</div><div class="clue-text">${text}</div>`;
+        document.getElementById("casenotes").appendChild(card);
+
+        showToast();
+      }
+
+      function showToast() {
+        const t = document.getElementById("toast");
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2800);
+      }
+
+      // ══════════════════════════════════════════
+      // PROFILE CARD
+      // ══════════════════════════════════════════
+
+      function openProfile(event, contact) {
+        event.stopPropagation();
+        showProfileCard(contact);
+      }
+
+      function openProfileFromChat() {
+        if (gameState.currentChat) showProfileCard(gameState.currentChat);
+      }
+
+      function showProfileCard(contact) {
+        const c = characters[contact];
+        const inner = document.getElementById("profile-card-inner");
+        inner.innerHTML = `
+    <div class="card-avatar ${c.avatarClass}">${c.initials}</div>
+    <div class="card-name">${c.name}</div>
+    <div class="card-role">${c.role}</div>
+    <div class="card-divider"></div>
+    <div class="card-row">
+      <div class="card-row-label">Relationship</div>
+      <div class="card-row-value">${c.relationship}</div>
+    </div>
+    <div class="card-row">
+      <div class="card-row-label">Personality</div>
+      <div class="card-row-value">${c.personality}</div>
+    </div>
+    <div class="card-row">
+      <div class="card-row-label">Background</div>
+      <div class="card-row-value">${c.background}</div>
+    </div>
+  `;
+        document.getElementById("profile-card").classList.add("open");
+        document.getElementById("overlay").classList.add("show");
+      }
+
+      function closeProfileCard() {
+        document.getElementById("profile-card").classList.remove("open");
+        document.getElementById("overlay").classList.remove("show");
+      }
+
+      // ══════════════════════════════════════════
+      // ALL CHARACTERS
+      // ══════════════════════════════════════════
+
+      function renderAllCharsList() {
+        const container = document.getElementById("chars-list-inner");
+        container.innerHTML = "";
+
+        // Player card first
+        const playerCard = document.createElement("div");
+        playerCard.className = "char-card";
+        playerCard.innerHTML = `
+    <div class="char-avatar" style="background:#1e2535;color:#8899bb;">YO</div>
+    <div class="char-info">
+      <div class="char-name">${playerName} <span class="char-tag tag-player">YOU</span></div>
+      <div class="char-role">Junior Developer · MIT Graduate</div>
+      <div class="char-desc">You're a junior dev who had a brief online interaction with Casey Morgan. You weren't supposed to be involved — but Casey's scheduled message changed that.</div>
+    </div>
+  `;
+        container.appendChild(playerCard);
+
+        // Victim first, then suspects
+        const order = [
+          "casey",
+          "river",
+          "jordan",
+          "alex",
+          "blackwell",
+          "dmitri",
+          "sam",
+        ];
+        order.forEach((key) => {
+          const c = characters[key];
+          const card = document.createElement("div");
+          card.className = "char-card";
+          const tagClass = c.tag === "victim" ? "tag-victim" : "tag-suspect";
+          const tagLabel = c.tag === "victim" ? "VICTIM" : "SUSPECT";
+          card.innerHTML = `
+      <div class="char-avatar ${c.avatarClass}">${c.initials}</div>
+      <div class="char-info">
+        <div class="char-name">${c.name} <span class="char-tag ${tagClass}">${tagLabel}</span></div>
+        <div class="char-role">${c.role}</div>
+        <div class="char-desc">${c.background}</div>
+      </div>
+    `;
+          container.appendChild(card);
+        });
+      }
+
+      function openAllChars() {
+        renderAllCharsList();
+        document.getElementById("allchars-panel").classList.add("open");
+      }
+
+      function closeAllChars() {
+        document.getElementById("allchars-panel").classList.remove("open");
+      }
+    </script>
+  </body>
+</html>
