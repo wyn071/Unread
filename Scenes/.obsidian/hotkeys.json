@@ -1,0 +1,11 @@
+{
+  "large-language-models:open-llm-modal": [
+    {
+      "modifiers": [
+        "Alt",
+        "Mod"
+      ],
+      "key": "L"
+    }
+  ]
+}
